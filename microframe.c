@@ -33,6 +33,10 @@ static int le_microframe;
 
 const zend_function_entry microframe_functions[] = {
 	PHP_FE(micro_test,NULL)
+	PHP_ME(myclass,__construct,NULL,ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+	PHP_ME(myclass,setName,NULL,ZEND_ACC_PUBLIC)
+	PHP_ME(myclass,getName,NULL,ZEND_ACC_PUBLIC)
+    PHP_ME(myclass,__destruct,NULL,ZEND_ACC_PUBLIC|ZEND_ACC_DTOR)
 	PHP_FE_END	/* Must be the last line in microframe_functions[] */
 };
 
@@ -66,11 +70,66 @@ PHP_FUNCTION(micro_test)
 }
 /*定义函数 end*/
 
+/*注册类方法 start*/
+zend_class_entry *myclass_ce;
 PHP_MINIT_FUNCTION(microframe)
 {
-	return SUCCESS;
+	//注册类
+	zend_class_entry ce;
+	INIT_CLASS_ENTRY(ce,"myclass",microframe_functions);  //使用INIT_CLASS_ENTRY宏初始化类，第二个参数指定类名，第三个参数是函数表
+	myclass_ce=zend_register_internal_class(&ce TSRMLS_CC);
+
+	//定义属性
+	 zend_declare_class_constant_stringl(myclass_ce,ZEND_STRL("WEL"),ZEND_STRL("welcome\n") TSRMLS_CC);
+	 zend_declare_class_constant_stringl(myclass_ce,ZEND_STRL("BYE"),ZEND_STRL("\nbye bye") TSRMLS_CC);
+	 zend_declare_property_null(myclass_ce,ZEND_STRL("name"),ZEND_ACC_PRIVATE TSRMLS_CC);
+
+	 return SUCCESS;
 }
 
+PHP_METHOD(myclass,__construct)
+{
+	zval **wel;
+	zend_class_entry *ce;
+	ce=Z_OBJCE_P(getThis());
+	zend_hash_find(&ce->constants_table,ZEND_STRS("WEL"), (void **)&wel);
+	php_printf("%s",Z_STRVAL_PP(wel));
+}
+
+PHP_METHOD(myclass,setName)
+{
+	zend_class_entry *ce;
+	ce=Z_OBJCE_P(getThis());
+	char *name;
+	int name_len;
+	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE){
+		WRONG_PARAM_COUNT
+	}
+	zend_update_property_stringl(ce,getThis(),ZEND_STRL("name"),name,name_len TSRMLS_CC);
+	RETURN_TRUE;
+}
+
+PHP_METHOD(myclass,getName)
+{
+	zval *name;
+	char *str;
+	zend_class_entry *ce;
+	ce=Z_OBJCE_P(getThis());
+	name=zend_read_property(ce,getThis(),ZEND_STRL("name"),0 TSRMLS_CC);
+	str=Z_STRVAL_P(name);
+	RETURN_STRINGL(str,Z_STRLEN_P(name),1);
+}
+
+PHP_METHOD(myclass,__destruct)
+{
+	zval **bye;
+	zend_class_entry *ce;
+	ce=Z_OBJCE_P(getThis());
+	zend_hash_find(&ce->constants_table,ZEND_STRS("BYE"),(void **)&bye);
+	php_printf("%s",Z_STRVAL_PP(bye));
+}
+
+/*注册类方法 end*/
 
 PHP_MSHUTDOWN_FUNCTION(microframe)
 {

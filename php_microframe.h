@@ -42,6 +42,13 @@ extern zend_module_entry microframe_module_entry;
 PHP_FUNCTION(micro_test);
 /*声明函数 end*/
 
+/*类方法声明 start*/
+PHP_METHOD(myclass,__construct);
+PHP_METHOD(myclass,setName);
+PHP_METHOD(myclass,getName);
+PHP_METHOD(myclass,__destruct);
+/*类方法声明 end*/
+
 PHP_MINIT_FUNCTION(microframe);
 PHP_MSHUTDOWN_FUNCTION(microframe);
 PHP_RINIT_FUNCTION(microframe);
